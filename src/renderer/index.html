@@ -9,29 +9,65 @@
   <body>
     <div class="app">
       <header class="app-header">
-        <div class="app-title">PDF Outline Editor</div>
+        <div class="app-title">PDF Outline Editor <span class="version" id="appVersion"></span></div>
         <div class="header-actions">
           <button class="ghost" id="openPdf" title="Open PDF">
             <span>📂</span>
             <span>Open</span>
           </button>
-          <button class="ghost" id="savePdf" title="Save PDF with outline">
+          <button class="ghost" id="savePdf" title="Save PDF (overwrites original, creates backup)">
             <span>💾</span>
             <span>Save</span>
           </button>
+          <button class="ghost" id="savePdfAs" title="Save PDF to new file">
+            <span>📄</span>
+            <span>Save As</span>
+          </button>
         </div>
       </header>
+      <div class="unified-toolbar">
+        <div class="toolbar-group">
+          <button class="icon" id="addTitle" title="Add title to current page">➕</button>
+          <button class="icon" id="addChild" title="Add nested title">↳</button>
+        </div>
+        <div class="toolbar-separator"></div>
+        <div class="toolbar-group">
+          <button class="icon" id="renameTitle" title="Rename title">✏️</button>
+          <button class="icon" id="setPage" title="Set target page">📍</button>
+          <button class="icon" id="deleteTitle" title="Delete title">🗑️</button>
+        </div>
+        <div class="toolbar-separator"></div>
+        <div class="toolbar-group">
+          <button class="icon" id="outdentTitle" title="Decrease level">⬅️</button>
+          <button class="icon" id="indentTitle" title="Increase level">➡️</button>
+          <button class="icon" id="moveUp" title="Move up">⬆️</button>
+          <button class="icon" id="moveDown" title="Move down">⬇️</button>
+        </div>
+        <div class="toolbar-separator"></div>
+        <div class="toolbar-group">
+          <button class="icon" id="expandAll" title="Expand all">⊞</button>
+          <button class="icon" id="collapseAll" title="Collapse all">⊟</button>
+          <button class="icon" id="undo" title="Nothing to undo" disabled>↶</button>
+          <button class="icon" id="redo" title="Nothing to redo" disabled>↷</button>
+        </div>
+        <div class="toolbar-spacer"></div>
+        <div class="toolbar-group">
+          <button class="icon" id="prevPage" title="Previous page">◀</button>
+          <div class="page-indicator">
+            Page <span id="currentPage">1</span> / <span id="totalPages">1</span>
+          </div>
+          <button class="icon" id="nextPage" title="Next page">▶</button>
+        </div>
+        <div class="toolbar-separator"></div>
+        <div class="toolbar-group">
+          <label class="zoom-control" title="Zoom">
+            🔍
+            <input id="zoomSlider" type="range" min="50" max="200" value="110" />
+          </label>
+        </div>
+      </div>
       <div class="content">
         <aside class="outline-pane" id="outlinePane">
-          <div class="outline-toolbar">
-            <button class="icon" id="addTitle" title="Add title to current page">➕</button>
-            <button class="icon" id="addChild" title="Add nested title">↳</button>
-            <button class="icon" id="deleteTitle" title="Delete title">🗑️</button>
-            <button class="icon" id="indentTitle" title="Increase level">➡️</button>
-            <button class="icon" id="outdentTitle" title="Decrease level">⬅️</button>
-            <button class="icon" id="moveUp" title="Move up">⬆️</button>
-            <button class="icon" id="moveDown" title="Move down">⬇️</button>
-          </div>
           <div class="outline-list" id="outlineList">
             <div class="empty-state">
               Open a PDF to start building an outline.
@@ -40,17 +76,6 @@
         </aside>
         <div class="divider" id="divider"></div>
         <main class="viewer-pane">
-          <div class="viewer-toolbar">
-            <button class="icon" id="prevPage" title="Previous page">◀</button>
-            <div class="page-indicator">
-              Page <span id="currentPage">1</span> / <span id="totalPages">1</span>
-            </div>
-            <button class="icon" id="nextPage" title="Next page">▶</button>
-            <label class="ghost" title="Zoom">
-              🔍
-              <input id="zoomSlider" type="range" min="80" max="160" value="110" />
-            </label>
-          </div>
           <div class="viewer" id="viewer"></div>
           <div class="drop-zone" id="dropZone">
             Drag a PDF here or click Open to begin.
@@ -61,13 +86,25 @@
     <div class="context-menu" id="contextMenu">
       <button data-action="add">Add title</button>
       <button data-action="addChild">Add nested title</button>
+      <button data-action="rename">Rename</button>
+      <button data-action="setPage">Set target page...</button>
       <button data-action="delete">Delete</button>
-      <button data-action="indent">Increase level</button>
+      <hr />
       <button data-action="outdent">Decrease level</button>
+      <button data-action="indent">Increase level</button>
       <button data-action="moveUp">Move up</button>
       <button data-action="moveDown">Move down</button>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.min.js"></script>
+    <div class="modal" id="pageModal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-title">Set Target Page</div>
+        <input type="number" id="pageInput" min="1" placeholder="Page number" />
+        <div class="modal-actions">
+          <button id="pageModalCancel">Cancel</button>
+          <button id="pageModalOk" class="primary">OK</button>
+        </div>
+      </div>
+    </div>
     <script src="renderer.js"></script>
   </body>
 </html>

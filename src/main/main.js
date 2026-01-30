@@ -1,11 +1,17 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, copyFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { applyOutlineToPdf, extractOutline } from '../shared/outline.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Read version from package.json
+const require = createRequire(import.meta.url);
+const packageJson = require('../../package.json');
+const APP_VERSION = packageJson.version;
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -39,6 +45,8 @@ app.on('window-all-closed', () => {
   }
 });
 
+ipcMain.handle('get-app-version', () => APP_VERSION);
+
 ipcMain.handle('open-pdf-dialog', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     title: 'Open PDF',
@@ -56,9 +64,30 @@ ipcMain.handle('open-pdf-dialog', async () => {
   return { filePath, data: data.buffer, outline };
 });
 
-ipcMain.handle('save-pdf-dialog', async (_event, { sourcePath, outline }) => {
+// Save (overwrite original with backup)
+ipcMain.handle('save-pdf', async (_event, { sourcePath, outline }) => {
+  if (!sourcePath) {
+    return null;
+  }
+
+  // Create backup
+  const backupPath = sourcePath + '.backup';
+  try {
+    await copyFile(sourcePath, backupPath);
+  } catch (err) {
+    console.error('Failed to create backup:', err);
+  }
+
+  const sourceData = await readFile(sourcePath);
+  const updated = await applyOutlineToPdf(sourceData, outline);
+  await writeFile(sourcePath, Buffer.from(updated));
+  return { filePath: sourcePath };
+});
+
+// Save As (choose new location)
+ipcMain.handle('save-pdf-as', async (_event, { sourcePath, outline }) => {
   const { canceled, filePath } = await dialog.showSaveDialog({
-    title: 'Save PDF with Outline',
+    title: 'Save PDF As',
     defaultPath: sourcePath ?? 'outline.pdf',
     filters: [{ name: 'PDF', extensions: ['pdf'] }]
   });
