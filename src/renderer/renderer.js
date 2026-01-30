@@ -1,13 +1,12 @@
 const { ipcRenderer } = require('electron');
-const path = require('node:path');
-const { pathToFileURL } = require('node:url');
 
-const moduleSearchPaths = [process.cwd(), __dirname];
-const pdfPath = require.resolve('pdfjs-dist/legacy/build/pdf.js', { paths: moduleSearchPaths });
-const workerPath = require.resolve('pdfjs-dist/legacy/build/pdf.worker.js', { paths: moduleSearchPaths });
-const pdfjsLib = require(pdfPath);
+const pdfjsLib = window.pdfjsLib;
+if (!pdfjsLib) {
+  throw new Error('PDF.js failed to load. Check that the CDN script is reachable.');
+}
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).toString();
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.worker.min.js';
 
 const state = {
   pdf: null,
