@@ -1,9 +1,9 @@
 {
-  "name": "pdf-toc-editor",
+  "name": "pdf-outline-editor",
   "version": "0.2.0",
   "description": "Desktop app to edit PDF outlines",
   "main": "src/main/main.js",
-  "author": "PDF TOC Editor Team",
+  "author": "Rafaël Jafferali",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -17,8 +17,8 @@
     "build:linux": "electron-builder --linux"
   },
   "build": {
-    "appId": "com.pdftoceditor.app",
-    "productName": "PDF TOC Editor",
+    "appId": "com.pdfoutlineeditor.app",
+    "productName": "PDF Outline Editor",
     "directories": {
       "output": "dist"
     },
