@@ -1171,6 +1171,16 @@ ipcRenderer.on('open-file', async (event, { data, filePath, outline }) => {
   await loadPdfData({ data, filePath, outline });
 });
 
+// Handle save before quit request from main process
+ipcRenderer.on('save-before-quit', async () => {
+  await requestSavePdf();
+  // After saving, tell the app to quit
+  ipcRenderer.send('quit-app');
+});
+
+// Expose isDirty function for main process to check
+window.isDirty = () => state.dirty;
+
 // Initialize version display
 ipcRenderer.invoke('get-app-version').then((version) => {
   document.getElementById('appVersion').textContent = `v${version}`;

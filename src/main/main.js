@@ -15,6 +15,7 @@ const APP_VERSION = packageJson.version;
 
 let mainWindow = null;
 let pendingFilePath = null;
+let isQuitting = false;
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({
@@ -39,9 +40,62 @@ const createWindow = () => {
     }
   });
   
+  // Handle close with unsaved changes
+  mainWindow.on('close', (event) => {
+    if (isQuitting) return;
+    
+    // Always prevent default first, then handle async logic
+    event.preventDefault();
+    
+    // Check dirty state and show dialog
+    handleCloseWithUnsavedChanges();
+  });
+  
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+};
+
+// Handle close with unsaved changes (async helper)
+const handleCloseWithUnsavedChanges = async () => {
+  if (!mainWindow) return;
+  
+  try {
+    // Ask renderer if there are unsaved changes
+    const isDirty = await mainWindow.webContents.executeJavaScript('window.isDirty ? window.isDirty() : false');
+    
+    if (!isDirty) {
+      // No unsaved changes, just close
+      isQuitting = true;
+      mainWindow.close();
+      return;
+    }
+    
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: 'warning',
+      buttons: ['Save and Exit', 'Exit Without Saving', 'Cancel'],
+      defaultId: 0,
+      cancelId: 2,
+      title: 'Unsaved Changes',
+      message: 'You have unsaved changes.',
+      detail: 'Do you want to save your changes before exiting?'
+    });
+    
+    if (response === 0) {
+      // Save and exit
+      mainWindow.webContents.send('save-before-quit');
+    } else if (response === 1) {
+      // Exit without saving
+      isQuitting = true;
+      mainWindow.close();
+    }
+    // response === 2: Cancel - do nothing
+  } catch (err) {
+    console.error('Error checking dirty state:', err);
+    // On error, allow close
+    isQuitting = true;
+    mainWindow.close();
+  }
 };
 
 // Open a file in the renderer
@@ -96,6 +150,12 @@ app.whenReady().then(() => {
 
 // Quit when all windows are closed (including on macOS)
 app.on('window-all-closed', () => {
+  app.quit();
+});
+
+// Handle quit request from renderer after saving
+ipcMain.on('quit-app', () => {
+  isQuitting = true;
   app.quit();
 });
 
